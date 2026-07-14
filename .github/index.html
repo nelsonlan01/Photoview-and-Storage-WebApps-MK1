@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub Open Photoview and Storage MK1</title>
+
+<!-- Google Fonts: Poppins -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  /* ===================== DESIGN TOKENS ===================== */
+  :root {
+    --eerie-black-1: hsl(240, 2%, 13%);
+    --eerie-black-2: hsl(240, 2%, 12%);
+    --smoky-black: hsl(0, 0%, 7%);
+    --white-1: hsl(0, 0%, 100%);
+    --white-2: hsl(0, 0%, 98%);
+    --orange-yellow-crayola: hsl(45, 100%, 72%);
+    --vegas-gold: hsl(45, 54%, 58%);
+    --light-gray: hsl(0, 0%, 84%);
+    --light-gray-70: hsla(0, 0%, 84%, 0.7);
+    --light-gray-30: hsla(0, 0%, 84%, 0.3);
+    --jet: hsl(0, 0%, 18%);
+    --radius-16: 16px;
+    --radius-20: 20px;
+    --radius-28: 28px;
+    --transition: 250ms ease;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--smoky-black);
+    color: var(--white-2);
+    font-family: "Poppins", sans-serif;
+    min-height: 100vh;
+  }
+
+  a { text-decoration: none; color: inherit; }
+  ul { list-style: none; }
+  img { display: block; max-width: 100%; }
+  button, input { font-family: inherit; border: none; outline: none; background: none; }
+
+  ::selection { background: var(--vegas-gold); color: var(--smoky-black); }
+
+  /* ===================== LAYOUT ===================== */
+  .app {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ---------- LEFT COLUMN (sidebar) ---------- */
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--eerie-black-1);
+    border-right: 1px solid var(--jet);
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-mark {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-16);
+    background: linear-gradient(135deg, var(--orange-yellow-crayola), var(--vegas-gold));
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: var(--smoky-black);
+    font-size: 1rem;
+    letter-spacing: -0.5px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--white-1);
+  }
+
+  .logo-text span {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--light-gray-70);
+  }
+
+  .stat-block {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .stat-item {
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--jet);
+  }
+
+  .stat-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--light-gray-70);
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--orange-yellow-crayola);
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    font-size: 0.7rem;
+    color: var(--light-gray-70);
+    line-height: 1.5;
+  }
+
+  /* ---------- RIGHT COLUMN (main) ---------- */
+  .main {
+    flex: 1;
+    padding: 40px 48px 64px;
+    max-width: 1200px;
+  }
+
+  .page-title {
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: var(--white-1);
+    margin-bottom: 6px;
+  }
+
+  .page-subtitle {
+    font-size: 0.85rem;
+    color: var(--light-gray-70);
+    margin-bottom: 28px;
+  }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--eerie-black-2);
+    border: 1px solid var(--jet);
+    border-radius: var(--radius-20);
+    padding: 14px 20px;
+    margin-bottom: 36px;
+    transition: border-color var(--transition);
+  }
+
+  .search-bar:focus-within { border-color: var(--vegas-gold); }
+
+  .search-bar svg { width: 18px; height: 18px; flex-shrink: 0; stroke: var(--light-gray-70); }
+
+  .search-bar input {
+    flex: 1;
+    color: var(--white-2);
+    font-size: 0.9rem;
+  }
+
+  .search-bar input::placeholder { color: var(--light-gray-70); }
+
+  .search-hint {
+    font-size: 0.7rem;
+    color: var(--light-gray-70);
+    white-space: nowrap;
+  }
+
+  /* Folder grid */
+  .folder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 20px;
+  }
+
+  .folder-card {
+    background: var(--eerie-black-2);
+    border: 1px solid var(--jet);
+    border-radius: var(--radius-20);
+    padding: 22px 20px;
+    cursor: pointer;
+    transition: transform var(--transition), border-color var(--transition), background var(--transition);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .folder-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--vegas-gold);
+    background: var(--eerie-black-1);
+  }
+
+  .folder-card svg.folder-icon {
+    width: 46px;
+    height: 38px;
+    fill: var(--vegas-gold);
+  }
+
+  .folder-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .folder-count {
+    font-size: 0.65rem;
+    background: var(--jet);
+    color: var(--light-gray);
+    padding: 4px 10px;
+    border-radius: 100px;
+  }
+
+  .folder-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--white-1);
+    word-break: break-word;
+  }
+
+  .folder-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag-pill {
+    font-size: 0.62rem;
+    color: var(--orange-yellow-crayola);
+    background: hsla(45, 100%, 72%, 0.08);
+    border: 1px solid hsla(45, 100%, 72%, 0.25);
+    padding: 3px 9px;
+    border-radius: 100px;
+  }
+
+  .empty-state, .loading-state, .error-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--light-gray-70);
+    font-size: 0.9rem;
+    border: 1px dashed var(--jet);
+    border-radius: var(--radius-20);
+  }
+
+  .error-state { color: var(--orange-yellow-crayola); }
+
+  /* ---------- Modal / gallery viewer ---------- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: hsla(0, 0%, 4%, 0.92);
+    display: none;
+    z-index: 100;
+    padding: 40px;
+    overflow-y: auto;
+  }
+
+  .modal-overlay.open { display: block; }
+
+  .modal-panel {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: var(--eerie-black-1);
+    border: 1px solid var(--jet);
+    border-radius: var(--radius-28);
+    padding: 32px;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    gap: 16px;
+  }
+
+  .modal-title { font-size: 1.3rem; font-weight: 600; color: var(--white-1); }
+  .modal-meta { font-size: 0.75rem; color: var(--light-gray-70); margin-top: 6px; }
+
+  .modal-close {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--jet);
+    color: var(--white-1);
+    font-size: 1.1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .modal-close:hover { background: var(--vegas-gold); color: var(--smoky-black); }
+
+  .modal-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .photo-thumb {
+    aspect-ratio: 1;
+    border-radius: var(--radius-16);
+    overflow: hidden;
+    border: 1px solid var(--jet);
+    cursor: zoom-in;
+  }
+
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--transition); }
+  .photo-thumb:hover img { transform: scale(1.06); }
+
+  /* Lightbox */
+  .lightbox {
+    position: fixed; inset: 0;
+    background: hsla(0,0%,2%,0.96);
+    display: none;
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 100%; max-height: 90vh; border-radius: var(--radius-16); }
+  .lightbox-close {
+    position: absolute; top: 24px; right: 32px;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--jet); color: var(--white-1); cursor: pointer;
+  }
+  .lightbox-close:hover { background: var(--vegas-gold); color: var(--smoky-black); }
+
+  @media (max-width: 780px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: relative; flex-direction: row; align-items: center; flex-wrap: wrap; }
+    .stat-block { flex-direction: row; flex-wrap: wrap; }
+    .sidebar-footer { width: 100%; margin-top: 12px; }
+    .main { padding: 28px 20px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ========== LEFT COLUMN ========== -->
+  <aside class="sidebar">
+    <div class="logo">
+      <!-- TODO: replace with your actual logo image/svg -->
+      <div class="logo-mark">喵?</div>
+      <div class="logo-text">NelsonMeowsonNya<span>Photo Storage</span></div>
+    </div>
+
+    <div class="stat-block">
+      <div class="stat-item">
+        <div class="stat-label">Total Photos</div>
+        <div class="stat-value" id="stat-total-photos">—</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Total Size</div>
+        <div class="stat-value" id="stat-total-size">—</div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      &copy; NelsonLAN and Claude AI 2026
+    </div>
+  </aside>
+
+  <!-- ========== RIGHT COLUMN ========== -->
+  <main class="main">
+    <h1 class="page-title">GitHub Open Photoview and Storage MK1</h1>
+    <p class="page-subtitle">Browse photo folders stored in the repo. Search by folder name or tag. (by Nelson LAN and Claude AI 2026)</p>
+
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input id="search-input" type="text" placeholder="Search by folder name or tag...">
+      <span class="search-hint">e.g. 20260714 or #tag</span>
+    </div>
+
+    <div id="folder-grid" class="folder-grid">
+      <div class="loading-state">Loading folders from repo…</div>
+    </div>
+  </main>
+
+</div>
+
+<!-- ========== FOLDER VIEWER MODAL ========== -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title">Folder</div>
+        <div class="modal-meta" id="modal-meta">0 photos</div>
+      </div>
+      <div class="modal-close" id="modal-close">&#10005;</div>
+    </div>
+    <div class="modal-tags" id="modal-tags"></div>
+    <div class="photo-grid" id="modal-photo-grid"></div>
+  </div>
+</div>
+
+<!-- ========== LIGHTBOX ========== -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-close" id="lightbox-close">&#10005;</div>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+/* =========================================================================
+   CONFIG — fill these in before publishing
+   ========================================================================= */
+const CONFIG = {
+  owner:  "nelsonlan01",   // TODO
+  repo:   "Photoview-and-Storage-WebApps-MK1",        // TODO
+  branch: "main",                  // TODO if different
+  token:  ""                       // OPTIONAL — see warning below
+};
+
+/*
+  IMPORTANT — read this before using a real access token:
+  This page calls the GitHub API directly from the browser. Anything you put
+  in CONFIG.token is visible to anyone who views the page source once this
+  is published on GitHub Pages. That's fine for a PUBLIC repo with no token
+  (unauthenticated requests are capped at 60/hour per IP), but it is NOT
+  safe for a genuinely PRIVATE repo — a client-side token would leak the
+  same access to everyone who visits the page.
+
+  If the repo must stay private, better options are:
+    1. Keep this repo public but unlisted (no token needed), or
+    2. Generate a static manifest.json (folder list + tags) with a small
+       script/GitHub Action run on your machine/CI, and have this page fetch
+       that manifest instead of calling the API directly (ask me and I can
+       build that version too).
+*/
+
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".avif"];
+
+let allFolders = []; // cached folder data for search
+
+/* ---------------------- GitHub API helpers ---------------------- */
+async function ghContents(path) {
+  const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}?ref=${CONFIG.branch}`;
+  const headers = CONFIG.token ? { Authorization: `token ${CONFIG.token}` } : {};
+  const res = await fetch(url, { headers });
+  if (!res.ok) {
+    throw new Error(`GitHub API error (${res.status}) for path "${path}"`);
+  }
+  return res.json();
+}
+
+function isImage(filename) {
+  const lower = filename.toLowerCase();
+  return IMAGE_EXTENSIONS.some(ext => lower.endsWith(ext));
+}
+
+/* Parses "Type Tag: [a, b]" (or "tags: [a, b]") out of a folder's .md file */
+function parseTags(mdText) {
+  const match = mdText.match(/(?:type\s*tag|tags?)\s*:?\s*\[([^\]]*)\]/i);
+  if (!match) return [];
+  return match[1]
+    .split(",")
+    .map(t => t.trim().replace(/^["']|["']$/g, ""))
+    .filter(Boolean);
+}
+
+function formatBytes(bytes) {
+  if (!bytes) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  let i = 0;
+  let val = bytes;
+  while (val >= 1024 && i < units.length - 1) {
+    val /= 1024;
+    i++;
+  }
+  return `${val.toFixed(val < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
+}
+
+/* ---------------------- Load all folder data ---------------------- */
+async function loadFolders() {
+  const grid = document.getElementById("folder-grid");
+  try {
+    const rootItems = await ghContents("");
+    const folderEntries = rootItems.filter(item => item.type === "dir");
+
+    if (folderEntries.length === 0) {
+      grid.innerHTML = `<div class="empty-state">No folders found at the repo root yet.</div>`;
+      updateTotals([]);
+      return;
+    }
+
+    const folders = await Promise.all(folderEntries.map(async (f) => {
+      const contents = await ghContents(f.path);
+      const images = contents.filter(c => c.type === "file" && isImage(c.name));
+
+      const mdFile =
+        contents.find(c => c.name.toLowerCase() === `${f.name.toLowerCase()}.md`) ||
+        contents.find(c => c.name.toLowerCase().endsWith(".md"));
+
+      let tags = [];
+      if (mdFile && mdFile.download_url) {
+        try {
+          const mdRes = await fetch(mdFile.download_url);
+          const mdText = await mdRes.text();
+          tags = parseTags(mdText);
+        } catch (e) {
+          console.warn(`Could not read tags for ${f.name}:`, e);
+        }
+      }
+
+      const totalBytes = images.reduce((sum, img) => sum + (img.size || 0), 0);
+
+      return { name: f.name, path: f.path, images, tags, totalBytes };
+    }));
+
+    allFolders = folders;
+    renderFolders(folders);
+    updateTotals(folders);
+
+  } catch (err) {
+    console.error(err);
+    grid.innerHTML = `<div class="error-state">Couldn't load folders. Check that CONFIG.owner / CONFIG.repo / CONFIG.branch are set correctly, and that the repo is public (or a valid token is configured).<br><br>${err.message}</div>`;
+    updateTotals([]);
+  }
+}
+
+function updateTotals(folders) {
+  const totalPhotos = folders.reduce((sum, f) => sum + f.images.length, 0);
+  const totalBytes = folders.reduce((sum, f) => sum + f.totalBytes, 0);
+  document.getElementById("stat-total-photos").textContent = totalPhotos.toLocaleString();
+  document.getElementById("stat-total-size").textContent = formatBytes(totalBytes);
+}
+
+/* ---------------------- Render folder cards ---------------------- */
+const FOLDER_ICON_SVG = `
+  <svg class="folder-icon" viewBox="0 0 24 20" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2 2h6l2 2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
+  </svg>`;
+
+function renderFolders(folders) {
+  const grid = document.getElementById("folder-grid");
+
+  if (folders.length === 0) {
+    grid.innerHTML = `<div class="empty-state">No folders match your search.</div>`;
+    return;
+  }
+
+  grid.innerHTML = folders.map((f, i) => `
+    <div class="folder-card" data-index="${allFolders.indexOf(f)}">
+      <div class="folder-card-top">
+        ${FOLDER_ICON_SVG}
+        <span class="folder-count">${f.images.length} photo${f.images.length === 1 ? "" : "s"}</span>
+      </div>
+      <div class="folder-name">${escapeHtml(f.name)}</div>
+      <div class="folder-tags">
+        ${f.tags.slice(0, 4).map(t => `<span class="tag-pill">#${escapeHtml(t)}</span>`).join("")}
+      </div>
+    </div>
+  `).join("");
+
+  grid.querySelectorAll(".folder-card").forEach(card => {
+    card.addEventListener("click", () => openFolder(allFolders[Number(card.dataset.index)]));
+  });
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, s => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[s]));
+}
+
+/* ---------------------- Search ---------------------- */
+document.getElementById("search-input").addEventListener("input", (e) => {
+  const q = e.target.value.trim().toLowerCase().replace(/^#/, "");
+  if (!q) {
+    renderFolders(allFolders);
+    return;
+  }
+  const filtered = allFolders.filter(f =>
+    f.name.toLowerCase().includes(q) ||
+    f.tags.some(t => t.toLowerCase().includes(q))
+  );
+  renderFolders(filtered);
+});
+
+/* ---------------------- Folder modal ---------------------- */
+const modalOverlay = document.getElementById("modal-overlay");
+
+function openFolder(folder) {
+  document.getElementById("modal-title").textContent = folder.name;
+  document.getElementById("modal-meta").textContent =
+    `${folder.images.length} photo${folder.images.length === 1 ? "" : "s"} · ${formatBytes(folder.totalBytes)}`;
+
+  document.getElementById("modal-tags").innerHTML =
+    folder.tags.map(t => `<span class="tag-pill">#${escapeHtml(t)}</span>`).join("") ||
+    `<span class="tag-pill" style="opacity:.5">no tags</span>`;
+
+  document.getElementById("modal-photo-grid").innerHTML = folder.images.map(img => `
+    <div class="photo-thumb" data-url="${img.download_url}">
+      <img src="${img.download_url}" alt="${escapeHtml(img.name)}" loading="lazy">
+    </div>
+  `).join("");
+
+  document.querySelectorAll(".photo-thumb").forEach(thumb => {
+    thumb.addEventListener("click", () => openLightbox(thumb.dataset.url));
+  });
+
+  modalOverlay.classList.add("open");
+}
+
+document.getElementById("modal-close").addEventListener("click", () => {
+  modalOverlay.classList.remove("open");
+});
+modalOverlay.addEventListener("click", (e) => {
+  if (e.target === modalOverlay) modalOverlay.classList.remove("open");
+});
+
+/* ---------------------- Lightbox ---------------------- */
+const lightbox = document.getElementById("lightbox");
+function openLightbox(url) {
+  document.getElementById("lightbox-img").src = url;
+  lightbox.classList.add("open");
+}
+document.getElementById("lightbox-close").addEventListener("click", () => {
+  lightbox.classList.remove("open");
+});
+lightbox.addEventListener("click", (e) => {
+  if (e.target === lightbox) lightbox.classList.remove("open");
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    lightbox.classList.remove("open");
+    modalOverlay.classList.remove("open");
+  }
+});
+
+/* ---------------------- Init ---------------------- */
+loadFolders();
+</script>
+
+</body>
+</html>
